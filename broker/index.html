@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta charset="UTF-8"> </head>
+<body style="font-family: Arial; padding: 20px;">
+    <h2>Сервіс 1: Відправник 📨</h2>
+    
+    <input type="text" id="messageInput" placeholder="Напишіть щось..." style="padding: 10px; width: 250px;">
+    <button onclick="send()" style="padding: 10px; cursor: pointer;">Надіслати</button>
+    
+    <p id="st" style="color: blue;">Статус: Підключення...</p>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <script>
+        // Використовуємо hostname, щоб працювало і через localhost, і через IP мережі
+        const client = new Paho.MQTT.Client(window.location.hostname, 9001, "client_sender_" + Math.random());
+        console.log(window.location.hostname, client)
+        // Додаємо обробку втрати зв'язку
+        client.onConnectionLost = (responseObject) => {
+            document.getElementById("st").innerText = "Зв'язок втрачено: " + responseObject.errorMessage;
+            document.getElementById("st").style.color = "red";
+        };
+
+        client.connect({
+            onSuccess: () => { 
+                document.getElementById("st").innerText = "є підключення!"; 
+                document.getElementById("st").style.color = "green";
+            },
+            onFailure: (e) => {
+                document.getElementById("st").innerText = "Помилка підключення: " + e.errorMessage;
+                document.getElementById("st").style.color = "red";
+            }
+        });
+
+        function send() {
+            let userText = document.getElementById("messageInput").value;
+            if (!userText) userText = "Порожнє повідомлення"; 
+
+            let msg = new Paho.MQTT.Message(userText);
+            msg.destinationName = "websocket/test";
+            client.send(msg);
+            
+            console.log("Відправлено: " + userText);
+        }
+    </script>
+</body>
+</html>
